@@ -1,0 +1,16 @@
+<div class="dropzone"
+    appFileDrop
+    (filesDropped)="_handleDrop($event)"
+    (filesHovered)="_dropzoneState($event)"
+    [ngClass]="{'active': dropzoneActive, 'error': dropzoneError, 'success': dropzoneSuccess}">
+
+    <md-icon class="icon">cloud_upload</md-icon>
+
+    <span *ngIf="dropzoneError" class="error-msg">{{ dropzoneError }}</span>
+
+    <span *ngFor="let file of fileNames">
+        {{ file }}
+    </span>
+
+
+</div>

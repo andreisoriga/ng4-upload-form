@@ -1,44 +1,20 @@
-<md-tab-group [selectedIndex]="selectedIndex">
-    <md-tab label="Upload" [disabled]="uploadedFileName != null ? true : false">
-        <div ng2FileDrop
-             [ngClass]="{'box__hover': hasBaseDropZoneOver}"
-             (fileOver)="fileOverBase($event)"
-             [uploader]="uploader"
-             class="box">
+<form (ngSubmit)="onUploadFormSubmit()" #uploadForm="ngForm">
 
-            <md-icon class="box__icon">cloud_upload</md-icon>
+    <md-input-container>
+        <input mdInput placeholder="Some text" name="comment" ngModel>
+    </md-input-container>
 
-            <div class="box__info" *ngIf="uploader?.queue?.length > 0; else dragInfo">
-                <div *ngFor="let item of uploader.queue">
-                    {{ item?.file?.name }} ({{ item?.file?.size/1024/1024 | number:'.2' }} MB)
-                </div>
+    <div class="box">
+        <h2>Drop file</h2>
 
-                <div class="box__progress">
-                    <div class="box__progress_bar" [ngStyle]="{ 'width': uploader.progress + '%' }"></div>
-                </div>
+        <app-dropzone
+            [allowedMimeType]="['application/zip', 'application/x-compressed', 'application/x-zip-compressed', 'multipart/x-zip']">
+        </app-dropzone>
 
-            </div>
-            <ng-template #dragInfo>
-                <div class="box__dragndrop">
-                    Drag file here to upload.
-                </div>
-            </ng-template>
+    </div>
 
-            <div class="box__buttons">
-                <button md-raised-button class="box__button success"
-                        (click)="uploader.uploadAll()"
-                        [disabled]="!uploader.getNotUploadedItems().length">Upload</button>
+    <button md-raised-button [disabled]="!uploadForm.dirty || !dropzone.isValid()">Apply</button>
 
-                <button md-button class="box__button"
-                        (click)="uploader.clearQueue()"
-                        [disabled]="!uploader.queue.length">Cancel</button>
-            </div>
-        </div>
+    <button md-button type="reset" (click)="clearUploadForm()">Clear</button>
 
-        <!--<input type="file" ng2FileSelect [uploader]="uploader" multiple/>-->
-
-    </md-tab>
-    <md-tab label="Resulted File" [disabled]="uploadedFileName != null ? false : true">
-        {{ uploadedFileName }}
-    </md-tab>
-</md-tab-group>
+</form>

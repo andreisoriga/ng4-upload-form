@@ -1,57 +1,70 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { MdSnackBar } from '@angular/material';
-import { FileItem, FileLikeObject, FileUploader, ParsedResponseHeaders } from 'ng2-file-upload';
-import { Action } from 'rxjs/scheduler/Action';
+import { UploadService } from './upload.service';
+import { HttpEventType, HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { NgForm } from '@angular/forms';
+import { DropzoneComponent } from './dropzone/dropzone.component';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
-    hasBaseDropZoneOver = false;
-    uploadedFileName = null;
-    selectedIndex = 0;
-    uploader: FileUploader;
+export class AppComponent {
 
-    constructor(public snackBar: MdSnackBar) { }
+    @ViewChild('uploadForm') uploadForm: NgForm;
+    @ViewChild(DropzoneComponent) dropzone: DropzoneComponent;
 
-    ngOnInit(): void {
+    constructor(public snackBar: MdSnackBar,
+                private uploadService: UploadService) { }
 
-        this.uploader = new FileUploader({
-            url: 'http://127.0.0.1:5000/uploads',
-            headers: [{name: 'Accept', value: 'application/json'}],
-            // https://www.sitepoint.com/web-foundations/mime-types-complete-list/
-            allowedMimeType: ['application/zip'],
-            // maxFileSize: 1024*1024,
-            // autoUpload: true,
-        });
-        this.uploader.onErrorItem = (item, response, status, headers) => this.onErrorItem(item, response, status, headers);
-        this.uploader.onSuccessItem = (item, response, status, headers) => this.onSuccessItem(item, response, status, headers);
-        this.uploader.onWhenAddingFileFailed = (item, filter, options) => this.onWrongItem(item, filter, options);
+    onUploadFormSubmit() {
+
+        const dropzone_data = this.dropzone.getFiles();
+
+        this.uploadService.uploadFile(dropzone_data).subscribe(
+            event => {
+                if (event.type === HttpEventType.UploadProgress) {
+                    // This is an upload progress event. Compute and show the % done:
+                    const percentDone = Math.round(100 * event.loaded / event.total);
+                    console.log(`File is ${percentDone}% uploaded.`);
+                } else if (event instanceof HttpResponse) {
+
+                    // having the filename is time to send the rest of the form data
+                    this.uploadService.sendFormData({
+                        'filenames': event.body['filenames'],
+                        'comment': this.uploadForm.value.comment
+                    }).subscribe(
+                        response => {
+                            // clear upload form
+                            this.uploadForm.reset();
+                            this.dropzone.clearDropzone();
+
+                            console.log(response)
+                        },
+                        error => console.log(error)
+                    );
+
+                }
+            },
+            (err: HttpErrorResponse) => {
+                if (err.error instanceof Error) {
+                    console.log('An error occurred:', err.error.message);
+                    this.snackBar.open('Client error ' + err.error.message,
+                        'Close', { duration: 3000, extraClasses: ['snack-error'] });
+                } else {
+                    console.log(`Backend returned code ${err.status}, body was: ${err.error}`);
+                    console.log(err.error);
+                    this.snackBar.open('Server has returned error ' + err.status,
+                        'Close', { duration: 3000, extraClasses: ['snack-error'] });
+                }
+            }
+        )
 
     }
 
-    onSuccessItem(item: FileItem, response: string, status: number, headers: ParsedResponseHeaders): any {
-        const data = JSON.parse(response);
-
-        // set the filename
-        this.uploadedFileName = data.filename;
-
-        // move to the second tab
-        this.selectedIndex = 1;
-    }
-
-    onErrorItem(item: FileItem, response: string, status: number, headers: ParsedResponseHeaders): any {
-        const data = JSON.parse(response);
-        this.snackBar.open(data.error, 'Close', {duration: 3000, extraClasses: ['snack-error']});
-    }
-
-    onWrongItem(item: FileLikeObject, filter: any, options: any) {
-        this.snackBar.open(`File '${item.name}' is not allowed.`, 'Close', {duration: 3000, extraClasses: ['snack-error']});
-    }
-
-    public fileOverBase(e: any): void {
-        this.hasBaseDropZoneOver = e;
+    clearUploadForm() {
+        // reset dropzone
+        this.dropzone.clearDropzone();
     }
 }

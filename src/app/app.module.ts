@@ -5,25 +5,30 @@ import 'hammerjs';
 
 import {AppComponent} from './app.component';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import {MdButtonModule, MdCheckboxModule, MdIconModule, MdTabsModule, MdSnackBarModule} from '@angular/material';
-import {FileDropDirective, FileSelectDirective} from 'ng2-file-upload';
+import { MdButtonModule, MdCheckboxModule, MdIconModule, MdSnackBarModule, MdInputModule } from '@angular/material';
+import { UploadService } from './upload.service';
+import { HttpClientModule } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { DropzoneComponent } from './dropzone/dropzone.component';
+import { FileDropDirective } from './dropzone/file-drop.directive';
 
 @NgModule({
     declarations: [
         AppComponent,
         FileDropDirective,
-        FileSelectDirective
+        DropzoneComponent
     ],
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
         MdButtonModule,
-        MdCheckboxModule,
-        MdTabsModule,
+        MdInputModule,
         MdIconModule,
-        MdSnackBarModule
+        MdSnackBarModule,
+        HttpClientModule,
+        FormsModule
     ],
-    providers: [],
+    providers: [UploadService],
     bootstrap: [AppComponent]
 })
 export class AppModule {
